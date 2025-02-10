@@ -1,43 +1,31 @@
 local Lighting = game:GetService("Lighting")
+local time = 12
+local timechanger = true  -- Default to false
 
-local DesiredColor = Color3.fromRGB(255, 255, 255) -- Set to white
-local ambientenabled = true
-
-local ambientFunc = {
-    Ambient = Lighting.Ambient,
-}
-
-local SpoofedAmbient2; SpoofedAmbient2 = hookmetamethod(game, "__index", newcclosure(function(self, string)
-    if checkcaller() then 
-        return SpoofedAmbient2(self, string)
+-- Add toggle for time changer
+ui.box.world:AddToggle('enabletimechanger', {
+    Text = 'Enable Time Changer',
+    Default = false,
+    Callback = function(state)
+        timechanger = state
     end
-    if self == Lighting and ambientFunc[string] then
-        return ambientFunc[string]
-    end
-    return SpoofedAmbient2(self, string)
-end))
+})
 
-local SpoofedAmbient1; SpoofedAmbient1 = hookmetamethod(game, "__newindex", newcclosure(function(self, string, value)
-    if checkcaller() then 
-        return SpoofedAmbient1(self, string, value)
-    end
-    if self == Lighting then
-        ambientFunc[string] = value
-        if string == "Ambient" then
-            return SpoofedAmbient1(self, string, ambientenabled and DesiredColor or value)
-        end
-    end
-    return SpoofedAmbient1(self, string, value)
-end))
+-- Add slider for time selection
+ui.box.world:AddSlider('timechanger', {
+    Text = 'Time Changer',
+    Default = math.round(Lighting.ClockTime),
+    Min = 0,
+    Max = 24,
+    Rounding = 1,
+    Compact = false
+}):OnChanged(function(state)
+    time = state
+end)
 
--- Function to toggle ambient lighting
-local function toggleAmbient(state)
-    ambientenabled = state
-    if ambientenabled then
-        Lighting.Ambient = DesiredColor -- Set to white when enabled
-    else
-        Lighting.Ambient = ambientFunc.Ambient
+-- Use RunService to update time
+game:GetService("RunService").Heartbeat:Connect(function()
+    if timechanger then
+        Lighting.ClockTime = time
     end
-end
-
--- You can call toggleAmbient(true) to enable the ambient lighting when needed.
+end)
